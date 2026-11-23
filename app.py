@@ -77,7 +77,7 @@ def download_png_bytes(file_id: str) -> bytes:
         _, done = downloader.next_chunk()
     return buf.getvalue()
 
-def render_hover_loupe(img_bytes: bytes, caption: str, iframe_height: int = 750, zoom: float = 2.5, lens_size: int = 180):
+def render_hover_loupe(img_bytes: bytes, caption: str, iframe_height: int = 500, zoom: float = 2.5, lens_size: int = 180):
     b64 = base64.b64encode(img_bytes).decode("utf-8")
     html = f"""
     <div style="text-align:center; font-family: sans-serif; width:100%;">

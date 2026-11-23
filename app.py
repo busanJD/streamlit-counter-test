@@ -229,7 +229,6 @@ with img_col:
     else:
         st.error(f"Image not found in Drive folder for expected filename: `{matched_name}`")
 
-    )
 
 with ctrl_col:
     # --- Section A: Radio Morphology ---

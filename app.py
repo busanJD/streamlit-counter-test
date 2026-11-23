@@ -204,9 +204,9 @@ with nav2:
         host_str = f"{ra_f} {dec_f}".strip() or "N/A"
 
 st.markdown(
-        f"<h4 style='text-align:center; margin-bottom:0;'>Source {curr_idx + 1} of {total} &nbsp;|&nbsp; "
-        f"RA_JD: <code>{curr_row.get('Ra_JD')}</code> &nbsp; Dec_JD: <code>{curr_row.get('Dec_JD')}</code></h4>"
-        f"<h4 style='text-align:center; margin-top:4px;'>Optical host : <code>{host_str}</code></h4>",
+        f"<h4 style='text-align:center;'>Source {curr_idx + 1} of {total} &nbsp;|&nbsp; "
+        f"RA_JD: <code>{curr_row.get('Ra_JD')}</code> &nbsp; Dec_JD: <code>{curr_row.get('Dec_JD')}</code> &nbsp;|&nbsp; "
+        f"Optical host : <code>{host_str}</code></h4>",
         unsafe_allow_html=True,
     )
 with nav3:

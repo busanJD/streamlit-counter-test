@@ -1,6 +1,8 @@
 import io
 import re
+import base64
 import streamlit as st
+import streamlit.components.v1 as components
 import gspread
 from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
@@ -74,6 +76,47 @@ def download_png_bytes(file_id: str) -> bytes:
     while not done:
         _, done = downloader.next_chunk()
     return buf.getvalue()
+
+def render_hover_loupe(img_bytes: bytes, caption: str, width: int = 500, zoom: float = 2.5, lens_size: int = 160):
+    b64 = base64.b64encode(img_bytes).decode("utf-8")
+    html = f"""
+    <div style="text-align:center; font-family: sans-serif;">
+      <div id="img-container" style="position:relative; display:inline-block; cursor:crosshair;">
+        <img id="target-img" src="data:image/png;base64,{b64}" style="width:{width}px; height:auto; display:block; border-radius:4px;" />
+        <div id="loupe" style="
+            display:none; position:absolute; pointer-events:none;
+            width:{lens_size}px; height:{lens_size}px; border-radius:50%;
+            border:2px solid #ff4b4b; box-shadow:0 0 10px rgba(0,0,0,0.6);
+            background-repeat:no-repeat; z-index:99;">
+        </div>
+      </div>
+      <div style="color:#888; font-size:13px; margin-top:6px;">{caption} (Hover to magnify {zoom}x)</div>
+    </div>
+    <script>
+      const img = document.getElementById("target-img");
+      const loupe = document.getElementById("loupe");
+      const zoom = {zoom};
+      const half = {lens_size} / 2;
+
+      img.addEventListener("mousemove", (e) => {{
+        const rect = img.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        loupe.style.display = "block";
+        loupe.style.left = (x - half) + "px";
+        loupe.style.top = (y - half) + "px";
+        loupe.style.backgroundImage = `url('${{img.src}}')`;
+        loupe.style.backgroundSize = `${{rect.width * zoom}}px ${{rect.height * zoom}}px`;
+        loupe.style.backgroundPosition = `-${{x * zoom - half}}px -${{y * zoom - half}}px`;
+      }});
+
+      img.addEventListener("mouseleave", () => {{
+        loupe.style.display = "none";
+      }});
+    </script>
+    """
+    components.html(html, height=width + 65)
 
 def find_image_for_coord(ra_val, dec_val, files_by_name, parsed_coords):
     """Match RA_JD and Dec_JD to RA{ra}_DEC{dec}_RGBC.png."""
@@ -225,7 +268,7 @@ with img_col:
     )
     if file_id:
         img_bytes = download_png_bytes(file_id)
-        st.image(img_bytes, caption=matched_name, use_container_width=True)
+        render_hover_loupe(img_bytes, matched_name, width=500, zoom=2.5, lens_size=160)
     else:
         st.error(f"Image not found in Drive folder for expected filename: `{matched_name}`")
 

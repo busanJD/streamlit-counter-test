@@ -260,7 +260,7 @@ with nav3:
 st.divider()
 
 # Main Layout: Image on Left, Buttons on Right
-img_col, ctrl_col = st.columns([1.2, 1])
+img_col, ctrl_col = st.columns([1, 1])
 
 with img_col:
     file_id, matched_name = find_image_for_coord(
@@ -268,7 +268,7 @@ with img_col:
     )
     if file_id:
         img_bytes = download_png_bytes(file_id)
-        render_hover_loupe(img_bytes, matched_name, width=True, zoom=3.5, lens_size=180)
+        render_hover_loupe(img_bytes, matched_name, width=700, zoom=3.5, lens_size=180)
     else:
         st.error(f"Image not found in Drive folder for expected filename: `{matched_name}`")
 

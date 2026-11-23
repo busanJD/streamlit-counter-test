@@ -8,7 +8,7 @@ from googleapiclient.http import MediaIoBaseDownload
 
 st.set_page_config(page_title="EDFN Morphology Classifier", layout="wide")
 
-RADIO_COLS = ["HT", "NAT", "WAT", "FR II", "FRI", "HyMoRS", "Unclassified"]
+RADIO_COLS = ["Irregular","1-sided jet","HT", "NAT",  "FR II", "FRI","WAT", "HyMoRS", "Unclassified"]
 HOST_COLS = ["Elliptical", "Spiral", "Merger/like"]
 ALL_CLASS_COLS = RADIO_COLS + HOST_COLS
 
@@ -217,7 +217,7 @@ with nav3:
 st.divider()
 
 # Main Layout: Image on Left, Buttons on Right
-img_col, ctrl_col = st.columns([1.3, 1])
+img_col, ctrl_col = st.columns([1, 1])
 
 with img_col:
     file_id, matched_name = find_image_for_coord(

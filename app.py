@@ -77,12 +77,12 @@ def download_png_bytes(file_id: str) -> bytes:
         _, done = downloader.next_chunk()
     return buf.getvalue()
 
-def render_hover_loupe(img_bytes: bytes, caption: str, width: int = 500, zoom: float = 2.5, lens_size: int = 160):
+def render_hover_loupe(img_bytes: bytes, caption: str, iframe_height: int = 750, zoom: float = 2.5, lens_size: int = 180):
     b64 = base64.b64encode(img_bytes).decode("utf-8")
     html = f"""
-    <div style="text-align:center; font-family: sans-serif;">
-      <div id="img-container" style="position:relative; display:inline-block; cursor:crosshair;">
-        <img id="target-img" src="data:image/png;base64,{b64}" style="width:{width}px; height:auto; display:block; border-radius:4px;" />
+    <div style="text-align:center; font-family: sans-serif; width:100%;">
+      <div id="img-container" style="position:relative; display:inline-block; width:100%; cursor:crosshair;">
+        <img id="target-img" src="data:image/png;base64,{b64}" style="width:100%; height:auto; display:block; border-radius:4px;" />
         <div id="loupe" style="
             display:none; position:absolute; pointer-events:none;
             width:{lens_size}px; height:{lens_size}px; border-radius:50%;
@@ -116,7 +116,7 @@ def render_hover_loupe(img_bytes: bytes, caption: str, width: int = 500, zoom: f
       }});
     </script>
     """
-    components.html(html, height=width + 65)
+    components.html(html, height=iframe_height)
 
 def find_image_for_coord(ra_val, dec_val, files_by_name, parsed_coords):
     """Match RA_JD and Dec_JD to RA{ra}_DEC{dec}_RGBC.png."""
@@ -268,7 +268,7 @@ with img_col:
     )
     if file_id:
         img_bytes = download_png_bytes(file_id)
-        render_hover_loupe(img_bytes, matched_name, width=700, zoom=3.5, lens_size=180)
+        render_hover_loupe(img_bytes, matched_name, iframe_height=750, zoom=2.5, lens_size=180)
     else:
         st.error(f"Image not found in Drive folder for expected filename: `{matched_name}`")
 

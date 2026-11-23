@@ -195,9 +195,18 @@ with nav1:
         st.session_state.idx -= 1
         st.rerun()
 with nav2:
+    ra_f = curr_row.get("RA_final", "")
+    dec_f = curr_row.get("DEC_final", "")
+    # Format to 4 decimals if numeric, otherwise show raw/blank
+    try:
+        host_str = f"{float(ra_f):.4f} {float(dec_f):.4f}"
+    except (ValueError, TypeError):
+        host_str = f"{ra_f} {dec_f}".strip() or "N/A"
+
     st.markdown(
-        f"<h4 style='text-align:center;'>Source {curr_idx + 1} of {total} &nbsp;|&nbsp; "
-        f"RA_JD: <code>{curr_row.get('Ra_JD')}</code> &nbsp; Dec_JD: <code>{curr_row.get('Dec_JD')}</code></h4>",
+        f"<h4 style='text-align:center; margin-bottom:0;'>Source {curr_idx + 1} of {total} &nbsp;|&nbsp; "
+        f"RA_JD: <code>{curr_row.get('Ra_JD')}</code> &nbsp; Dec_JD: <code>{curr_row.get('Dec_JD')}</code></h4>"
+        f"<p style='text-align:center; margin-top:4px;'>Optical host : <code>{host_str}</code></p>",
         unsafe_allow_html=True,
     )
 with nav3:
@@ -220,8 +229,6 @@ with img_col:
     else:
         st.error(f"Image not found in Drive folder for expected filename: `{matched_name}`")
 
-    st.caption(
-        f"**Optical Host:** RA_final = `{curr_row.get('RA_final')}` | DEC_final = `{curr_row.get('DEC_final')}`"
     )
 
 with ctrl_col:

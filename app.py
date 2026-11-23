@@ -9,7 +9,7 @@ from googleapiclient.http import MediaIoBaseDownload
 st.set_page_config(page_title="EDFN Morphology Classifier", layout="wide")
 
 RADIO_COLS = ["HT", "NAT", "WAT", "FR II", "FRI", "HyMoRS", "Unclassified"]
-HOST_COLS = ["Ellip", "Spiral", "Merger/like"]
+HOST_COLS = ["Elliptical", "Spiral", "Merger/like"]
 ALL_CLASS_COLS = RADIO_COLS + HOST_COLS
 
 # ---------------------------------------------------------

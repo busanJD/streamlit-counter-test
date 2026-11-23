@@ -268,7 +268,7 @@ with img_col:
     )
     if file_id:
         img_bytes = download_png_bytes(file_id)
-        render_hover_loupe(img_bytes, matched_name, width=700, zoom=3.5, lens_size=180)
+        render_hover_loupe(img_bytes, matched_name, width=700, zoom=3.5, lens_size=220)
     else:
         st.error(f"Image not found in Drive folder for expected filename: `{matched_name}`")
 

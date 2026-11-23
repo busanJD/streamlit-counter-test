@@ -260,7 +260,7 @@ with nav3:
 st.divider()
 
 # Main Layout: Image on Left, Buttons on Right
-img_col, ctrl_col = st.columns([2.6, 1])
+img_col, ctrl_col = st.columns([2.3, 1])
 
 with img_col:
     file_id, matched_name = find_image_for_coord(

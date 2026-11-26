@@ -10,7 +10,7 @@ from googleapiclient.http import MediaIoBaseDownload
 
 st.set_page_config(page_title="EDFN Morphology Classifier", layout="wide")
 
-RADIO_COLS = ["Irregular","1-sided jet","HT", "NAT",  "FR II", "FRI","WAT", "HyMoRS", "Unclassified"]
+RADIO_COLS = ["Irregular","1-sided jet","HT", "NAT", "FR II", "FR I","WAT", "HyMoRS", "Unclassified"]
 HOST_COLS = ["Elliptical", "Spiral", "Merger/like"]
 ALL_CLASS_COLS = RADIO_COLS + HOST_COLS
 

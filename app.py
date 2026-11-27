@@ -9,7 +9,22 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
 
 st.set_page_config(page_title="EDFN Morphology Classifier", layout="wide")
-
+st.markdown(
+    """
+    <style>
+    /* Tighten button padding, height, and vertical spacing */
+    div.stButton > button {
+        padding: 0.2rem 0.5rem !important;
+        min-height: 2rem !important;
+        font-size: 0.85rem !important;
+    }
+    div[data-testid="stVerticalBlock"] > div {
+        gap: 0.35rem !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 RADIO_COLS = ["Irregular","1-sided jet","HT", "NAT", "FR-II", "FR-I","WAT", "HyMoRS", "Unclassified"]
 HOST_COLS = ["Elliptical", "Spiral", "Merger/like"]
 ALL_CLASS_COLS = RADIO_COLS + HOST_COLS
@@ -308,39 +323,35 @@ with img_col:
 
 
 with ctrl_col:
-    # --- Section A: Radio Morphology ---
-    st.subheader("a. Radio Morphology")
-    active_radio = [c for c in RADIO_COLS if str(curr_row.get(c, "")).strip() == "1"]
-    st.write(f"Current: **{', '.join(active_radio) if active_radio else 'None'}**")
+    # --- Top: Euclid Q1 HiPS Viewer ---
+    st.markdown("**Euclid Q1 Host Cutout**")
+    render_euclid_hips_box(
+        curr_row.get("RA_final"),
+        curr_row.get("DEC_final"),
+        fov_deg=0.015,
+        height=240,
+    )
 
-    r_cols = st.columns(2)
+    # --- Middle: Radio Morphology (Compact 3x3 Grid) ---
+    active_radio = [c for c in RADIO_COLS if str(curr_row.get(c, "")).strip() == "1"]
+    st.markdown(f"**a. Radio Morphology** &nbsp;|&nbsp; Current: **{', '.join(active_radio) if active_radio else 'None'}**")
+
+    r_cols = st.columns(3)
     for i, label in enumerate(RADIO_COLS):
         is_selected = label in active_radio
         btn_type = "primary" if is_selected else "secondary"
-        if r_cols[i % 2].button(label, key=f"radio_{curr_idx}_{label}", type=btn_type, use_container_width=True):
+        if r_cols[i % 3].button(label, key=f"radio_{curr_idx}_{label}", type=btn_type, use_container_width=True):
             update_classification(curr_idx, "radio", label, auto_advance=auto_next)
             st.rerun()
 
-    st.divider()
-
-    # --- Section B: Host Morphology ---
-    st.subheader("b. Host Morphology")
+    # --- Bottom: Host Morphology (Compact 1x3 Row) ---
     active_host = [c for c in HOST_COLS if str(curr_row.get(c, "")).strip() == "1"]
-    st.write(f"Current: **{', '.join(active_host) if active_host else 'None'}**")
+    st.markdown(f"**b. Host Morphology** &nbsp;|&nbsp; Current: **{', '.join(active_host) if active_host else 'None'}**")
 
     h_cols = st.columns(3)
     for i, label in enumerate(HOST_COLS):
         is_selected = label in active_host
         btn_type = "primary" if is_selected else "secondary"
         if h_cols[i].button(label, key=f"host_{curr_idx}_{label}", type=btn_type, use_container_width=True):
-            # Do not auto-advance on Host click if Radio hasn't been set yet
             update_classification(curr_idx, "host", label, auto_advance=False)
             st.rerun()
-    st.divider()
-    st.subheader("Euclid Q1 Host Cutout")
-    render_euclid_hips_box(
-        curr_row.get("RA_final"),
-        curr_row.get("DEC_final"),
-        fov_deg=0.015,
-        height=300,
-    )        

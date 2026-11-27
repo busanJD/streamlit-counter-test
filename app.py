@@ -27,7 +27,7 @@ def init_google_clients():
         st.secrets["gcp_service_account"], scopes=scopes
     )
     gc = gspread.authorize(creds)
-    worksheet = gc.open_by_key(st.secrets["sheet_id"]).worksheet("Classification")
+    worksheet = gc.open_by_key(st.secrets["sheet_id"]).worksheet("Classification-2") #changed from batch 1 : Classification
     drive_service = build("drive", "v3", credentials=creds)
     return worksheet, drive_service
 

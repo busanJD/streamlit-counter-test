@@ -118,6 +118,40 @@ def render_hover_loupe(img_bytes: bytes, caption: str, width: int = 500, zoom: f
     """
     components.html(html, height=width + 65)
 
+def render_euclid_hips_box(ra_val, dec_val, fov_deg: float = 0.015, height: int = 300):
+    """Render an interactive Aladin Lite box centered on (RA_final, DEC_final) using Euclid Q1 HiPS."""
+    try:
+        ra_f = float(ra_val)
+        dec_f = float(dec_val)
+    except (ValueError, TypeError):
+        st.info("Optical host coordinates (RA_final / DEC_final) not available for Euclid Q1 view.")
+        return
+
+    html = f"""
+    <link rel="stylesheet" href="https://aladin.cds.unistra.fr/AladinLite/api/v3/latest/aladin.css" />
+    <script type="text/javascript" src="https://aladin.cds.unistra.fr/AladinLite/api/v3/latest/aladin.js" charset="utf-8"></script>
+    <div id="aladin-lite-div" style="width:100%; height:{height}px; border-radius:6px; border:1px solid #444;"></div>
+    <script type="text/javascript">
+      A.init.then(() => {{
+        let aladin = A.aladin('#aladin-lite-div', {{
+          target: '{ra_f} {dec_f}',
+          fov: {fov_deg},
+          showReticle: true,
+          showZoomControl: true,
+          showFullscreenControl: true,
+          showLayersControl: false,
+          showGotoControl: false
+        }});
+        const euclidHips = aladin.newImageSurvey(
+          'https://alasky.cds.unistra.fr/Euclid/Q1/CDS_P_Euclid_Q1_color',
+          {{ imgFormat: 'png' }}
+        );
+        aladin.setImageSurvey(euclidHips);
+      }});
+    </script>
+    """
+    components.html(html, height=height + 10)
+
 def find_image_for_coord(ra_val, dec_val, files_by_name, parsed_coords):
     """Match RA_JD and Dec_JD to RA{ra}_DEC{dec}_RGBC.png."""
     try:
@@ -302,3 +336,11 @@ with ctrl_col:
             # Do not auto-advance on Host click if Radio hasn't been set yet
             update_classification(curr_idx, "host", label, auto_advance=False)
             st.rerun()
+    st.divider()
+    st.subheader("Euclid Q1 Host Cutout")
+    render_euclid_hips_box(
+        curr_row.get("RA_final"),
+        curr_row.get("DEC_final"),
+        fov_deg=0.015,
+        height=300,
+    )        

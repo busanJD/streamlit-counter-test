@@ -133,24 +133,35 @@ def render_hover_loupe(img_bytes: bytes, caption: str, width: int = 500, zoom: f
     """
     components.html(html, height=width + 65)
 
-def render_euclid_hips_box(ra_val, dec_val, fov_deg: float = 0.015, height: int = 300):
-    """Render an interactive Aladin Lite box centered on (RA_final, DEC_final) using Euclid Q1 HiPS."""
+def render_euclid_hips_box(ra_val, dec_val, fallback_ra=None, fallback_dec=None, fov_deg: float = 0.015, height: int = 230):
+    """Interactive Aladin Lite Euclid Q1 HiPS box with click-to-measure ICRS decimal degrees."""
     try:
         ra_f = float(ra_val)
         dec_f = float(dec_val)
+        has_host = True
     except (ValueError, TypeError):
-        st.info("Optical host coordinates (RA_final / DEC_final) not available for Euclid Q1 view.")
-        return
+        has_host = False
+        try:
+            ra_f = float(fallback_ra)
+            dec_f = float(fallback_dec)
+        except (ValueError, TypeError):
+            st.info("No valid coordinates available for Euclid Q1 view.")
+            return
 
     html = f"""
     <link rel="stylesheet" href="https://aladin.cds.unistra.fr/AladinLite/api/v3/latest/aladin.css" />
     <script type="text/javascript" src="https://aladin.cds.unistra.fr/AladinLite/api/v3/latest/aladin.js" charset="utf-8"></script>
     <div id="aladin-lite-div" style="width:100%; height:{height}px; border-radius:6px; border:1px solid #444;"></div>
+    <div id="coord-readout" style="font-family:monospace; font-size:12px; color:#ddd; background:#1e1e1e; padding:4px 8px; border-radius:4px; margin-top:4px; display:flex; justify-content:space-between; align-items:center;">
+      <span id="coord-text">Click galaxy in box to pick host (deg)</span>
+      <span id="copy-badge" style="color:#4caf50; font-weight:bold;"></span>
+    </div>
     <script type="text/javascript">
       A.init.then(() => {{
         let aladin = A.aladin('#aladin-lite-div', {{
           target: '{ra_f} {dec_f}',
           fov: {fov_deg},
+          cooFrame: 'ICRSd',
           showReticle: true,
           showZoomControl: true,
           showFullscreenControl: true,
@@ -162,10 +173,34 @@ def render_euclid_hips_box(ra_val, dec_val, fov_deg: float = 0.015, height: int 
           {{ imgFormat: 'png' }}
         );
         aladin.setImageSurvey(euclidHips);
+
+        let cat = A.catalog({{ name: 'Selected Host', sourceSize: 14, color: '#00ff66', shape: 'circle' }});
+        aladin.addCatalog(cat);
+        if ({'true' if has_host else 'false'}) {{
+          cat.addSources([A.source({ra_f}, {dec_f})]);
+        }}
+
+        // Click on any galaxy to get exact ICRS decimal degrees
+        aladin.on('click', function(coords) {{
+          if (coords && coords.ra !== undefined && coords.dec !== undefined) {{
+            const raDeg = coords.ra.toFixed(6);
+            const decDeg = coords.dec.toFixed(6);
+            cat.removeAll();
+            cat.addSources([A.source(parseFloat(raDeg), parseFloat(decDeg))]);
+            aladin.gotoRaDec(parseFloat(raDeg), parseFloat(decDeg));
+
+            document.getElementById('coord-text').innerText = `Picked: ${{raDeg}}, ${{decDeg}}`;
+            if (navigator.clipboard) {{
+              navigator.clipboard.writeText(`${{raDeg}}, ${{decDeg}}`).catch(() => {{}});
+              document.getElementById('copy-badge').innerText = 'Copied!';
+              setTimeout(() => {{ document.getElementById('copy-badge').innerText = ''; }}, 1500);
+            }}
+          }}
+        }});
       }});
     </script>
     """
-    components.html(html, height=height + 10)
+    components.html(html, height=height + 38)
 
 def find_image_for_coord(ra_val, dec_val, files_by_name, parsed_coords):
     """Match RA_JD and Dec_JD to RA{ra}_DEC{dec}_RGBC.png."""
@@ -254,6 +289,23 @@ def update_classification(row_idx_in_list: int, category_type: str, selected_lab
     if auto_advance and row_idx_in_list < total - 1:
         st.session_state.idx += 1
 
+def update_host_coords(row_idx_in_list: int, new_ra: str, new_dec: str):
+    row_data = st.session_state.rows[row_idx_in_list]
+    sheet_row_num = row_data["_sheet_row"]
+
+    # Validate decimal degrees
+    ra_val = round(float(new_ra), 7)
+    dec_val = round(float(new_dec), 7)
+
+    row_data["RA_final"] = str(ra_val)
+    row_data["DEC_final"] = str(dec_val)
+
+    ra_col_idx = headers.index("RA_final") + 1
+    dec_col_idx = headers.index("DEC_final") + 1
+
+    sheet.update_cell(sheet_row_num, ra_col_idx, ra_val)
+    sheet.update_cell(sheet_row_num, dec_col_idx, dec_val)
+
 # ---------------------------------------------------------
 # 5. User Interface & Navigation
 # ---------------------------------------------------------
@@ -324,13 +376,41 @@ with img_col:
 
 with ctrl_col:
     # --- Top: Euclid Q1 HiPS Viewer ---
-    st.markdown("**Euclid Q1 Host Cutout**")
+    st.markdown("**Euclid Q1 Host Cutout** *(click galaxy to pick coords)*")
     render_euclid_hips_box(
         curr_row.get("RA_final"),
         curr_row.get("DEC_final"),
+        fallback_ra=curr_row.get("Ra_JD"),
+        fallback_dec=curr_row.get("Dec_JD"),
         fov_deg=0.015,
-        height=240,
+        height=220,
     )
+
+    # Compact 1-line Host Coordinate Updater
+    hc1, hc2 = st.columns([2.2, 1])
+    default_pair = ""
+    try:
+        default_pair = f"{float(curr_row.get('RA_final')):.6f}, {float(curr_row.get('DEC_final')):.6f}"
+    except (ValueError, TypeError):
+        pass
+
+    new_coord_str = hc1.text_input(
+        "Host RA, Dec (deg)",
+        value=default_pair,
+        key=f"host_coord_input_{curr_idx}",
+        label_visibility="collapsed",
+        placeholder="Paste picked RA, Dec (deg)",
+    )
+    if hc2.button("Save Host", key=f"save_host_{curr_idx}", use_container_width=True):
+        try:
+            parts = [p.strip() for p in new_coord_str.replace(";", ",").split(",") if p.strip()]
+            if len(parts) != 2:
+                parts = new_coord_str.split()
+            update_host_coords(curr_idx, parts[0], parts[1])
+            st.toast(f"Updated RA_final={parts[0]}, DEC_final={parts[1]}")
+            st.rerun()
+        except Exception as e:
+            st.error(f"Invalid coordinates: {e}")
 
     # --- Middle: Radio Morphology (Compact 3x3 Grid) ---
     active_radio = [c for c in RADIO_COLS if str(curr_row.get(c, "")).strip() == "1"]
